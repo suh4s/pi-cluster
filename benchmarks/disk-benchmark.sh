@@ -26,7 +26,7 @@ fi
 
 # Variables.
 MOUNT_PATH=${MOUNT_PATH:-"/"}
-USER_HOME_PATH=$(getent passwd $SUDO_USER | cut -d: -f6)
+USER_HOME_PATH=$(bash -c "echo ~$(printf %q "$USER")")
 TEST_SIZE=${TEST_SIZE:-"1g"}
 IOZONE_INSTALL_PATH=$USER_HOME_PATH
 IOZONE_VERSION=iozone3_508
@@ -50,9 +50,15 @@ if [ ! -f $IOZONE_INSTALL_PATH/$IOZONE_VERSION/src/current/iozone ]; then
   printf "Installing iozone...\n"
   curl "http://www.iozone.org/src/current/$IOZONE_VERSION.tar" | tar -x
   cd $IOZONE_VERSION/src/current
-  case $(uname -m) in
+  CURRENT_ARCH=$(uname -m)
+  CURRENT_SYSTEM=$(uname -s)
+  case $CURRENT_ARCH in
     arm64|aarch64)
-      make --quiet linux-arm
+      if [[ $CURRENT_SYSTEM == 'Darwin' ]]; then
+        make --quiet macosx
+      else
+        make --quiet linux-arm
+      fi
       ;;
     *)
       make --quiet linux-AMD64
